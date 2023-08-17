@@ -2,34 +2,67 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SoundManager : MonoBehaviour
+namespace adbreeker_UnityPackage
 {
-
-    public GameObject audioPrefab;
-    public AudioClip[] audioClips;
-
-
-    public void PlaySound(int soundId)
+    public class SoundManager : MonoBehaviour
     {
-        try
+
+        public GameObject audioPrefab;
+        public List<AudioClip> audioClips;
+
+        public bool dontDestroyOnLoad = false;
+
+        private void Awake()
         {
-            AudioClip audioClip = audioClips[soundId];
-            if(audioClip != null)
+            if (FindObjectsOfType<SoundManager>().Length > 1)
             {
-                GameObject temp = Instantiate(audioPrefab);
-                temp.GetComponent<AudioSource>().clip = audioClip;
-                temp.GetComponent<AudioSource>().Play();
-                StartCoroutine(destroySource(temp));
+                Destroy(gameObject);
+            }
+
+            if(dontDestroyOnLoad)
+            {
+                DontDestroyOnLoad(this);
             }
         }
-        catch
+
+        private void Update()
         {
-            Debug.Log("SoundManager: Something went wrong");
+            AudioSource audio = GetComponent<AudioSource>();
+            if (Time.timeScale == 0)
+            {
+                audio.Pause();
+            }
+            else
+            {
+                audio.UnPause();
+            }
+        }
+
+
+        public void PlaySound(int soundId)
+        {
+            try
+            {
+                AudioClip audioClip = audioClips[soundId];
+                if (audioClip != null)
+                {
+                    GameObject temp = Instantiate(audioPrefab);
+                    DontDestroyOnLoad(temp);
+                    temp.GetComponent<AudioSource>().clip = audioClip;
+                    temp.GetComponent<AudioSource>().Play();
+                    StartCoroutine(destroySource(temp));
+                }
+            }
+            catch
+            {
+                Debug.Log("SoundManager: Something went wrong");
+            }
+        }
+        IEnumerator destroySource(GameObject temp)
+        {
+            yield return new WaitForSecondsRealtime(temp.GetComponent<AudioSource>().clip.length);
+            Destroy(temp);
         }
     }
-    IEnumerator destroySource(GameObject temp)
-    {
-        yield return new WaitForSecondsRealtime(temp.GetComponent<AudioSource>().clip.length);
-        Destroy(temp);
-    }
 }
+
